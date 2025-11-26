@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+websockets
+google-generativeai
+yt-dlp
+opencv-python-headless
+sqlalchemy
+python-dotenv
+psycopg2-binary
+Pillow
