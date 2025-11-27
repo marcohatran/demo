@@ -10,6 +10,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql://user:password@db:5432/mediamonitor
     depends_on:
       - db

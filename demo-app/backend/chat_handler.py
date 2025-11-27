@@ -1,16 +1,18 @@
 import os
-import google.generativeai as genai
+from openai import OpenAI
 from sqlalchemy.orm import Session
 from models import AnalysisLog
 from datetime import datetime, timedelta
 
-# Configure Gemini
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Configure Groq
+client = OpenAI(
+    api_key=os.getenv("GROQ_API_KEY"),
+    base_url="https://api.groq.com/openai/v1"
+)
 
 async def answer_question(question: str, db: Session):
     """
-    Trả lời câu hỏi của user bằng Gemini dựa trên dữ liệu real-time đã thu thập
+    Trả lời câu hỏi của user bằng Groq dựa trên dữ liệu real-time đã thu thập
     """
     
     # Lấy dữ liệu phân tích gần nhất (30 phút trước)
@@ -38,7 +40,7 @@ Cảm xúc: {log.sentiment_score}
     
     context = "".join(context_parts)
     
-    # Tạo prompt cho Gemini
+    # Tạo prompt cho Groq
     prompt = f"""
 Bạn là trợ lý AI phân tích tin tức thông minh cho hệ thống giám sát truyền thông.
 
@@ -60,15 +62,23 @@ TRẢ LỜI:
 """
     
     try:
-        response = await model.generate_content_async(prompt)
-        answer = response.text.strip()
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5,
+            max_tokens=500
+        )
+        
+        answer = response.choices[0].message.content.strip()
         return {
             "answer": answer,
             "context_used": len(recent_logs),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        print(f"Gemini Chat Error: {e}")
+        print(f"Groq Chat Error: {e}")
         return {
             "answer": "Xin lỗi, tôi gặp lỗi khi xử lý câu hỏi. Vui lòng thử lại.",
             "context_used": 0,
